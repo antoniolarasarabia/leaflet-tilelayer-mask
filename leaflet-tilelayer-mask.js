@@ -30,7 +30,7 @@
     'zI6ZgxlZuIRlVbW11eXFeFhxZHAmZlY2dlYWlPwPAD6nKPWk11d/AAAAAElFTkSuQmCC'
   ].join("");
 
-  L.TileLayer.Mask = L.TileLayer.extend({
+  L.GridLayer.Mask = L.GridLayer.extend({
     options: {
       maskUrl: defaultMaskUrl,
       maskSize: 512
@@ -59,7 +59,7 @@
       var mask = defs.appendChild(L.SVG.create("mask"));
       var image = mask.appendChild(L.SVG.create("image"));
       var size = this.getMaskSize();
-      mask.setAttribute("id", "leaflet-tilelayer-mask-" + L.stamp(this));
+      mask.setAttribute("id", "leaflet-gridlayer-mask-" + L.stamp(this));
       mask.setAttribute("x","-100%");
       mask.setAttribute("y","-100%");
       mask.setAttribute("width","300%");
@@ -100,30 +100,11 @@
       }
       this._level = level;
       return level;
-    },
-    _addTile: function(coords, container) {
-      var tilePos = this._getTilePos(coords);
-      var tileSize = this.getTileSize();
-      var key = this._tileCoordsToKey(coords);
-      var url = this.getTileUrl(this._wrapCoords(coords));
-
-      var tile = container.appendChild(L.SVG.create("image"));
-      tile.setAttribute("width", tileSize.x);
-      tile.setAttribute("height", tileSize.y);
-      tile.setAttribute("x", tilePos.x);
-      tile.setAttribute("y", tilePos.y);
-      tile.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", url);
-
-      this._tiles[key] = {
-        el: tile,
-        coords: coords,
-        current: true
-      };
     }
   });
 
-  L.tileLayer.mask = function(url, options) {
-    return new L.TileLayer.Mask(url, options);
+  L.gridLayer.mask = function(url, options) {
+    return new L.GridLayer.Mask(url, options);
   };
 
 })();
