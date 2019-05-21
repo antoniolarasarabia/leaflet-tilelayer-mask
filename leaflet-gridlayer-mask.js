@@ -1,3 +1,33 @@
+// @function bind(fn: Function, …): Function
+// Returns a new function bound to the arguments passed, like [Function.prototype.bind](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Function/bind).
+// Has a `L.bind()` shortcut.
+function bind(fn, obj) {
+	var slice = Array.prototype.slice;
+
+	if (fn.bind) {
+		return fn.bind.apply(fn, slice.call(arguments, 1));
+	}
+
+	var args = slice.call(arguments, 2);
+
+	return function () {
+		return fn.apply(obj, args.length ? args.concat(slice.call(arguments)) : arguments);
+	};
+}
+
+// @function setPosition(el: HTMLElement, position: Point)
+// Sets the position of `el` to coordinates specified by `position`,
+// (used by Leaflet internally to position its layers).
+function setPosition(el, point) {
+
+	/*eslint-disable */
+	el._leaflet_pos = point;
+	/* eslint-enable */
+
+    el.style.left = point.x + 'px';
+    el.style.top = point.y + 'px';
+}
+
 (function() {
 
   var defaultMaskUrl = [
@@ -30,7 +60,7 @@
     'zI6ZgxlZuIRlVbW11eXFeFhxZHAmZlY2dlYWlPwPAD6nKPWk11d/AAAAAElFTkSuQmCC'
   ].join("");
 
-  L.GridLayer.Mask = L.GridLayer.extend({
+  L.VectorGrid.Slicer.Mask = L.VectorGrid.Slicer.extend({
     options: {
       maskUrl: defaultMaskUrl,
       maskSize: 512
@@ -40,6 +70,7 @@
       return s instanceof L.Point ? s : new L.Point(s, s);
     },
     setCenter: function(containerPoint) {
+        // console.log('se va entrando en set center este');
       if (arguments.length === 2) {
         this.setCenter(L.point(arguments[0], arguments[1]));
         return;
@@ -51,7 +82,8 @@
         this._image.setAttribute("y", p.y);
       }
     },
-    _initContainer: function() {
+    _initContainer: function () {
+
       if (this._container) return;
       var rootGroup = this._map.getRenderer(this)._rootGroup;
       var defs = rootGroup.appendChild(L.SVG.create("defs"));
@@ -59,7 +91,7 @@
       var mask = defs.appendChild(L.SVG.create("mask"));
       var image = mask.appendChild(L.SVG.create("image"));
       var size = this.getMaskSize();
-      mask.setAttribute("id", "leaflet-gridlayer-mask-" + L.stamp(this));
+      mask.setAttribute("id", "leaflet-tilelayer-mask-" + L.stamp(this));
       mask.setAttribute("x","-100%");
       mask.setAttribute("y","-100%");
       mask.setAttribute("width","300%");
@@ -71,9 +103,15 @@
       this._container = container;
       this._image = image;
       this.setCenter(this._map.getSize().divideBy(2));
-    },
-    _updateLevels: function() {
 
+		// if (this.options.opacity < 1) {
+		// 	this._updateOpacity();
+		// }
+
+		// this.getPane().appendChild(this._container);
+	},
+    _updateLevels: function() {
+        console.log('se entra en updatelevels');
       var zoom = this._tileZoom;
       if (zoom === undefined)
         return undefined;
@@ -100,11 +138,34 @@
       }
       this._level = level;
       return level;
+    },
+    _addTile: function(coords, container) {
+
+      var tilePos = this._getTilePos(coords);
+      var tileSize = this.getTileSize();
+      var key = this._tileCoordsToKey(coords);
+
+      var i = Math.ceil( Math.random() * 4 );
+      var url = "https://placekitten.com/256/256?image=" + i;
+        var test_tile = this.createTile(this._wrapCoords(coords), bind(this._tileReady, this, coords));
+      var tile = container.appendChild(test_tile);
+      tile.setAttribute("width", tileSize.x);
+      tile.setAttribute("height", tileSize.y);
+      tile.setAttribute("x", tilePos.x);
+      tile.setAttribute("y", tilePos.y);
+      tile.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", url);
+
+      this._tiles[key] = {
+        el: tile,
+        coords: coords,
+        current: true
+      };
     }
   });
 
-  L.gridLayer.mask = function(url, options) {
-    return new L.GridLayer.Mask(url, options);
+  L.vectorGrid.slicer.mask = function(data, options) {
+    return new L.VectorGrid.Slicer.Mask(data, options);
   };
 
 })();
+
